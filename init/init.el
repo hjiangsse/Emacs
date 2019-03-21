@@ -1,4 +1,4 @@
-;;;-----------------------Do Some Config For Packages BEGIN--------------------------
+;;;-----------------------Do Some Config For Packages Begin--------------------------
 (require 'package)
 (add-to-list 'package-archives
              '("melpa" . "http://melpa.org/packages/") t)
@@ -30,7 +30,7 @@
 (setq slime-contrib '(slime-fancy))
 
 ;;add mu4e to load path
-(add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu4e")
+;;(add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu4e")
 
 ;;settings for gnu global
 (setq load-path (cons "/usr/share/emacs/site-lisp/global" load-path))
@@ -45,9 +45,7 @@
 (setq speedbar-show-unknown-files t)
 
 ;;set default ansi-term binary file
-;;(setq explicit-shell-file-name "d:\\cmder\\vendor\\git-for-windows\\bin\\bash.exe")
-(if (eq system-type 'gnu/linux)
-    (setq explicit-shell-file-name "/bin/bash"))
+(setq explicit-shell-file-name "d:\\cmder\\vendor\\git-for-windows\\bin\\bash.exe")
 
 ;;Do not make backup files
 (setq make-backup-files nil)
@@ -69,10 +67,10 @@
    [default default default italic underline success warning error])
  '(ansi-color-names-vector
    ["#2e3436" "#a40000" "#4e9a06" "#c4a000" "#204a87" "#5c3566" "#729fcf" "#eeeeec"])
- '(custom-enabled-themes (quote (tango)))
+ '(custom-enabled-themes (quote (light-blue)))
  '(package-selected-packages
    (quote
-    (go-mode sr-speedbar magit expand-region evil neotree auto-complete-c-headers auto-complete yasnippet-snippets ggtags zygospore helm-gtags helm yasnippet ws-butler volatile-highlights use-package undo-tree iedit dtrt-indent counsel-projectile company clean-aindent-mode anzu))))
+    (sr-speedbar magit expand-region evil neotree auto-complete-c-headers auto-complete yasnippet-snippets ggtags zygospore helm-gtags helm yasnippet ws-butler volatile-highlights use-package undo-tree iedit dtrt-indent counsel-projectile company clean-aindent-mode anzu))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -251,47 +249,61 @@
 (global-set-key (kbd "C-x g") 'magit-status)
 ;;;------------------Remap Some Command End-------------------
 
-;;;------------------Setup Go mode----------------------------
-(add-to-list 'load-path "~/.emacs.d/elpa/go-mode/")
-(autoload 'go-mode "go-mode" nil t)
-(add-to-list 'auto-mode-alist '("\\.go\\'" . go-mode))
-;;;------------------Setup Go mode finish---------------------
+;;;----------Writing Emacs Extensions Begin ------------------
+;;(defun other-window-backward (n)
+;;  "Select nth previous window."
+;;  (interactive "p")
+;;  (other-window (- n)))
 
-;;;--------------Insert new line blow/above curent line-------
-(defun insert-line-below ()
-  "Insert an empty line below the current line."
+;;make argument optional
+(defun other-window-backward (&optional n)
+  "Select Nth previous window."
+  (interactive "p")
+  (other-window (if n (- n) -1)))
+
+;;scroll text up and down one line at a time
+(defalias 'scroll-ahead 'scroll-up)
+(defalias 'scroll-behind 'scroll-down)
+
+(defun scroll-one-line-ahead ()
+  "Scroll ahead one line."
   (interactive)
-  (save-excursion
-    (end-of-line)
-    (open-line 1)))
-(global-set-key (kbd "C-x d") 'insert-line-below)
+  (scroll-ahead 1))
 
-(defun insert-line-above ()
-  "Insert an empty line above the current line."
+(defun scroll-one-line-behind ()
+  "Scroll behind one line."
   (interactive)
-  (save-excursion
-    (end-of-line 0)
-    (open-line 1)))
-(global-set-key (kbd "C-x a") 'insert-line-above)
-;;;--------------Insert new line blow/above curent line-------
+  (scroll-behind 1))
 
-;;;--------------Disable Arrow Keys---------------------------
-(global-unset-key (kbd "<left>"))
-(global-unset-key (kbd "<right>"))
-(global-unset-key (kbd "<up>"))
-(global-unset-key (kbd "<down>"))
-(global-unset-key (kbd "<C-left>"))
-(global-unset-key (kbd "<C-right>"))
-(global-unset-key (kbd "<C-up>"))
-(global-unset-key (kbd "<C-down>"))
-(global-unset-key (kbd "<M-left>"))
-(global-unset-key (kbd "<M-right>"))
-(global-unset-key (kbd "<M-up>"))
-(global-unset-key (kbd "<M-down>"))
-;;;--------------Disable Arrow Keys---------------------------
+(defun scroll-n-lines-ahead (&optional n)
+  "Scroll ahead N lines (1 by default)"
+  (interactive "P")
+  (scroll-ahead (prefix-numeric-value n)))
 
-;;;--------------Shift Region Or Line-------------------------
-(add-to-list 'load-path "~/.emacs.d/utils/utils.el")
-(global-set-key (kbd "C-c C-s") 'shift-right)
-(global-set-key (kbd "C-c C-l") 'shift-left)
-;;;--------------SHIFT Region Or Line-------------------------
+(defun scroll-n-lines-behind (&optional n)
+  "Scroll behind N lines (1 by default)"
+  (interactive "P")
+  (scroll-behind (prefix-numeric-value n)))
+
+(defun line-to-top ()
+  "Move current line to top of window."
+  (interactive)
+  (recenter 0))
+
+(global-set-key (kbd "C-x C-n") 'other-window)
+(global-set-key (kbd "C-x C-p") 'other-window-backward)
+(global-set-key (kbd "C-x C-q") 'quoted-insert)
+(global-set-key (kbd "C-q") 'scroll-n-lines-behind)
+(global-set-key (kbd "C-z") 'scroll-n-lines-ahead)
+(global-set-key (kbd "M-s c") 'line-to-top)
+
+;;------------Hook Begin--------------------------------------
+(defun read-only-if-symlink ()
+  (if (file-symlink-p buffer-file-name)
+      (progn
+        (setq buffer-read-only t)
+        (message "File is a symlink"))))
+
+(add-hook 'find-file-hooks 'read-only-if-symlink)
+;;------------Hook End----------------------------------------
+;;;----------Writing Emacs Extensions End --------------------
